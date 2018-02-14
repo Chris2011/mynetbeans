@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Serializable;
 import java.util.UUID;
@@ -17,6 +18,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 
 /**
@@ -114,6 +116,7 @@ public class NBMongoDBInstance implements Serializable {
         NBMongoDBInstance retValue = new NBMongoDBInstance();
         JSONParser parser = new JSONParser();
         try (Reader reader = new BufferedReader(new InputStreamReader(registeredInstanceJSONFile.getInputStream()))) {
+            
             JSONObject registeredInstanceJson = (JSONObject) parser.parse(reader);
             String id = santizeValue(registeredInstanceJson.get(FIELD_ID));
             String hostName = santizeValue(registeredInstanceJson.get(FIELD_HOSTNAME));
@@ -137,12 +140,21 @@ public class NBMongoDBInstance implements Serializable {
         return retValue;
     }
 
-    public void serialize(){
-        
-    }
-    
     private static String santizeValue(Object data) {
         return data == null ? null : data + "";
+    }
+
+    public void serialize(FileObject configStore) throws IOException {
+        FileObject serializationFile = FileUtil.createData(configStore, id);
+        JSONObject instanceJson = new JSONObject();
+        instanceJson.put(FIELD_ID, id);
+        instanceJson.put(FIELD_DISPLAY_NAME, StringUtils.isEmpty(displayName)?hostName:displayName);
+        instanceJson.put(FIELD_HOSTNAME,hostName);
+        instanceJson.put(FIELD_PORT, portNumber+"");
+        instanceJson.put(FIELD_USERNAME, StringUtils.isEmpty(userName)?"":userName);
+        try(PrintWriter out = new PrintWriter(serializationFile.getOutputStream()) ){
+            out.println(instanceJson.toJSONString());
+        }
     }
 
 }

@@ -5,16 +5,20 @@
  */
 package org.pr.nb.mongodb.nodes;
 
+import java.beans.IntrospectionException;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import org.apache.commons.lang.StringUtils;
 import org.json.simple.parser.ParseException;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.modules.Places;
 import org.openide.nodes.ChildFactory;
+import org.openide.nodes.Node;
 import org.openide.nodes.NodeAdapter;
 import org.openide.util.Exceptions;
 import org.pr.nb.mongodb.component.PropertiesNotifier;
@@ -45,6 +49,18 @@ class NBMongoDBNodeFactory extends ChildFactory.Detachable<NBMongoDBInstance> {
         return true;
     }
 
+    @Override
+    protected Node createNodeForKey(NBMongoDBInstance key) {
+        try {
+            return new NBMongoDBInstanceNode(key);
+        } catch (IntrospectionException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return null;
+    }
+    
+    
+
     private List<NBMongoDBInstance> loadStoredInstances() {
         List<NBMongoDBInstance> retValue = new ArrayList<>();
         try {
@@ -69,7 +85,18 @@ class NBMongoDBNodeFactory extends ChildFactory.Detachable<NBMongoDBInstance> {
     
    private class NodeEventWrapper extends NodeAdapter{
         @Override
-        public void propertyChange(PropertyChangeEvent ev) {
+        public void propertyChange(PropertyChangeEvent evt) {
+            if(StringUtils.equals(PropertyNames.NEW_MONGODB_INSTANCE.name(),evt.getPropertyName())){
+                NBMongoDBInstance instance = (NBMongoDBInstance) evt.getNewValue();
+                registeredInstances.add(instance);
+                Executors.newSingleThreadExecutor().execute(() -> {
+                    try {
+                        instance.serialize(getConfigStore());
+                    } catch (IOException ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
+                });
+            }
             refresh(true);
         }
        

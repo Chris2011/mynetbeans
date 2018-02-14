@@ -9,6 +9,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.ServerAddress;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
@@ -17,14 +18,20 @@ import org.apache.commons.lang.StringUtils;
 import org.openide.WizardDescriptor;
 import org.openide.util.ChangeSupport;
 import org.openide.util.NbBundle;
+import org.pr.nb.mongodb.component.PropertyNames;
 import org.pr.nb.mongodb.data.NBMongoDBInstance;
 
 @NbBundle.Messages({
-    "ERROR_NOT_TESTED=Connection not verified. Please test connection",
     "# {0} - host",
     "# {1} - port number",
-    "ERROR_COULD_NOT_CONNECT=Conection to host {0} and port {1} failed",
-    "STEP1_NAME=Step #1: Settings"
+    "ERROR_COULD_NOT_CONNECT=Conection to host {0} and port {1} failed or is not tested",
+    "# {0} - host",
+    "# {1} - port number",
+    "SUCCESSFULLY_CONNECTED=Conection to host {0} and port {1} success",
+    "STEP1_NAME=Step #1: Settings",
+    "ERROR_EMPTY_PORT=Port number cannot be blank",
+    "ERROR_EMPTY_HOSTNAME=Hostname cannot be blank"
+
 })
 public final class NBMongoDBNewInstanceSettingsVisualPanel extends JPanel implements WizardMessagingInterface {
 
@@ -181,6 +188,8 @@ public final class NBMongoDBNewInstanceSettingsVisualPanel extends JPanel implem
             @Override
             public void run() {
                 try {
+                    settings.putProperty(WizardDescriptor.PROP_INFO_MESSAGE, "");
+                    showProgress(true);
                     String host = hostTextField.getText();
                     String prttext = portTextField.getText();
                     int port = 0;
@@ -189,10 +198,15 @@ public final class NBMongoDBNewInstanceSettingsVisualPanel extends JPanel implem
                     } catch (NumberFormatException e) {
                         port = 27017;
                     }
-                    ServerAddress address = new ServerAddress(host,port);
+                    ServerAddress address = new ServerAddress(host, port);
                     MongoClient client = new MongoClient(address);
                     client.listDatabases();
-                    showProgress(true);
+                    settings.putProperty(WizardDescriptor.PROP_INFO_MESSAGE, Bundle.SUCCESSFULLY_CONNECTED(hostTextField.getText(), portTextField.getText()));
+                    connectionOK = true;
+                    changeSupport.fireChange();
+                } catch (Exception e) {
+                    connectionOK = false;
+                    settings.putProperty(WizardDescriptor.PROP_ERROR_MESSAGE, Bundle.ERROR_COULD_NOT_CONNECT(hostTextField.getText(), portTextField.getText()));
                 } finally {
                     showProgress(false);
                 }
@@ -216,7 +230,6 @@ public final class NBMongoDBNewInstanceSettingsVisualPanel extends JPanel implem
     // End of variables declaration//GEN-END:variables
 
     private WizardDescriptor settings;
-    private boolean connectionTested = false;
     private boolean connectionOK = false;
     private ChangeSupport changeSupport;
 
@@ -239,15 +252,18 @@ public final class NBMongoDBNewInstanceSettingsVisualPanel extends JPanel implem
 
     @Override
     public boolean isPanelValid() {
-        boolean retValue = connectionTested && connectionOK;
+        boolean retValue = checkData();
         if (retValue) {
-            settings.putProperty(WizardDescriptor.PROP_ERROR_MESSAGE, null);
-        } else {
-            if (!connectionTested) {
-                settings.putProperty(WizardDescriptor.PROP_ERROR_MESSAGE, Bundle.ERROR_NOT_TESTED());
-            } else if (!connectionOK) {
+            if (connectionOK) {
+                settings.putProperty(WizardDescriptor.PROP_ERROR_MESSAGE, null);
+            } else {
                 settings.putProperty(WizardDescriptor.PROP_ERROR_MESSAGE, Bundle.ERROR_COULD_NOT_CONNECT(hostTextField.getText(), portTextField.getText()));
             }
+        }
+        retValue = connectionOK;
+        if (retValue) {
+            NBMongoDBInstance instance = (NBMongoDBInstance) settings.getProperty(WizardMessagingInterface.KEY_USER_SETTINGS);
+            settings.putProperty(PropertyNames.NEW_MONGODB_WIZARD_INSTANCE.name(), instance);
         }
         return retValue;
     }
@@ -280,6 +296,22 @@ public final class NBMongoDBNewInstanceSettingsVisualPanel extends JPanel implem
         this.testProgressBar.setVisible(show);
     }
 
+    private boolean checkData() {
+        boolean retValue = StringUtils.isNotEmpty(hostTextField.getText());
+        if (retValue) {
+            retValue = StringUtils.isNotEmpty(portTextField.getText());
+            if (retValue) {
+                settings.putProperty(WizardDescriptor.PROP_ERROR_MESSAGE, Bundle.ERROR_EMPTY_PORT());
+            }
+        } else {
+            settings.putProperty(WizardDescriptor.PROP_ERROR_MESSAGE, Bundle.ERROR_EMPTY_HOSTNAME());
+        }
+        if (retValue) {
+            settings.putProperty(WizardDescriptor.PROP_ERROR_MESSAGE, null);
+        }
+        return retValue;
+    }
+
     private class DocumentListenerImpl implements DocumentListener {
 
         public DocumentListenerImpl() {
@@ -287,33 +319,25 @@ public final class NBMongoDBNewInstanceSettingsVisualPanel extends JPanel implem
 
         @Override
         public void insertUpdate(DocumentEvent e) {
-            checkAndSetDefaults();
+            changeSupport.fireChange();
         }
 
         @Override
         public void removeUpdate(DocumentEvent e) {
-            checkAndSetDefaults();
+            changeSupport.fireChange();
         }
 
         @Override
         public void changedUpdate(DocumentEvent e) {
-            checkAndSetDefaults();
-        }
-
-        private void checkAndSetDefaults() {
-            //hostname -default = 127.0.0.1
-            //Display name - default = hostname
-            //port default = 27017
-            if (StringUtils.isEmpty(hostTextField.getText())) {
-                hostTextField.setText("127.0.0.1");
-            }
-            if (StringUtils.isEmpty(displayNameTextField.getText())) {
-                displayNameTextField.setText(hostTextField.getText());
-            }
-            if (StringUtils.isEmpty(portTextField.getText())) {
-                portTextField.setText("27017");
-            }
             changeSupport.fireChange();
         }
+    }
+
+    public void addChangeListener(ChangeListener l) {
+        changeSupport.addChangeListener(l);
+    }
+
+    public void removeChangeListener(ChangeListener l) {
+        changeSupport.removeChangeListener(l);
     }
 }

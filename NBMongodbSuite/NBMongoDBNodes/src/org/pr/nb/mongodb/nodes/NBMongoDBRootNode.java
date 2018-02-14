@@ -53,12 +53,12 @@ class NBMongoDBRootNode extends AbstractNode {
 
     @Override
     public Image getIcon(int type) {
-        return ImageUtilities.loadImage("org/pr/nb/plugins/mongodb/nodes/db-catalog-node.png");
+        return ImageUtilities.loadImage("org/pr/nb/mongodb/nodes/db-catalog-node.png");
     }
 
     @Override
     public Image getOpenedIcon(int type) {
-        return ImageUtilities.loadImage("org/pr/nb/plugins/mongodb/nodes/db-catalog-node.png");
+        return ImageUtilities.loadImage("org/pr/nb/mongodb/nodes/db-catalog-node.png");
     }
 
     @Override

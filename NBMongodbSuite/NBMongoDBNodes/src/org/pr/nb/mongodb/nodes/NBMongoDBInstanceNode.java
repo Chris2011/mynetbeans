@@ -26,12 +26,20 @@ import org.pr.nb.mongodb.data.NBMongoDBInstance;
  *
  * @author Mahakaal
  */
-public class MongoDBInstanceNode extends BeanNode<NBMongoDBInstance> {
+public class NBMongoDBInstanceNode extends BeanNode<NBMongoDBInstance> {
 
-    public MongoDBInstanceNode(NBMongoDBInstance bean) throws IntrospectionException {
+    private NBMongoDBInstance bean;
+    public NBMongoDBInstanceNode(NBMongoDBInstance bean) throws IntrospectionException {
         super(bean);
+        this.bean = bean;
     }
 
+    @Override
+    public String getName() {
+        return bean.getDisplayName();
+    }
+
+    
     @Override
     public Action getPreferredAction() {
         return super.getPreferredAction(); //To change body of generated methods, choose Tools | Templates.

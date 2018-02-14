@@ -47,9 +47,9 @@ public class NBMongoDBInstanceType extends NewType {
     
 
     private void launchWizard() {
+        
         List<WizardDescriptor.Panel<WizardDescriptor>> panels = new ArrayList<>();
         panels.add(new NBMongoDBNewInstanceWizardPanel1());
-        panels.add(new NBMongoDBNewInstanceWizardPanel2());
         String[] steps = new String[panels.size()];
         for (int i = 0; i < panels.size(); i++) {
             Component c = panels.get(i).getComponent();

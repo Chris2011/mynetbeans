@@ -5,17 +5,24 @@
  */
 package org.pr.nb.mongodb.nodes.wizard;
 
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
+import org.openide.util.ChangeSupport;
 import org.openide.util.HelpCtx;
 
-public class NBMongoDBNewInstanceWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor> {
+public class NBMongoDBNewInstanceWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, ChangeListener {
 
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
     private NBMongoDBNewInstanceSettingsVisualPanel component;
+    private ChangeSupport changeSupport;
+
+    public NBMongoDBNewInstanceWizardPanel1() {
+        changeSupport = new ChangeSupport(this);
+    }
 
     // Get the visual component for the panel. In this template, the component
     // is kept separate. This can be more efficient: if the wizard is created
@@ -25,6 +32,7 @@ public class NBMongoDBNewInstanceWizardPanel1 implements WizardDescriptor.Panel<
     public NBMongoDBNewInstanceSettingsVisualPanel getComponent() {
         if (component == null) {
             component = new NBMongoDBNewInstanceSettingsVisualPanel();
+            component.addChangeListener(this);
         }
         return component;
     }
@@ -49,10 +57,12 @@ public class NBMongoDBNewInstanceWizardPanel1 implements WizardDescriptor.Panel<
 
     @Override
     public void addChangeListener(ChangeListener l) {
+        changeSupport.addChangeListener(l);
     }
 
     @Override
     public void removeChangeListener(ChangeListener l) {
+        changeSupport.removeChangeListener(l);
     }
 
     @Override
@@ -65,6 +75,11 @@ public class NBMongoDBNewInstanceWizardPanel1 implements WizardDescriptor.Panel<
     public void storeSettings(WizardDescriptor wiz) {
         // use wiz.putProperty to remember current panel state
         getComponent().storeSettings(wiz);
+    }
+
+    @Override
+    public void stateChanged(ChangeEvent e) {
+        changeSupport.fireChange();
     }
 
 }
