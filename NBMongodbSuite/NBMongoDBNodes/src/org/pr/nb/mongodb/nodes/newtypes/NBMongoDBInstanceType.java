@@ -19,7 +19,6 @@ import org.pr.nb.mongodb.component.PropertiesNotifier;
 import org.pr.nb.mongodb.component.PropertyNames;
 import org.pr.nb.mongodb.data.NBMongoDBInstance;
 import org.pr.nb.mongodb.nodes.wizard.NBMongoDBNewInstanceWizardPanel1;
-import org.pr.nb.mongodb.nodes.wizard.NBMongoDBNewInstanceWizardPanel2;
 import org.pr.nb.mongodb.nodes.wizard.WizardMessagingInterface;
 
 /**

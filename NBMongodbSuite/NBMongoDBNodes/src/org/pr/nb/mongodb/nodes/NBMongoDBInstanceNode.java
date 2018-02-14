@@ -15,12 +15,22 @@
  */
 package org.pr.nb.mongodb.nodes;
 
-import java.awt.Image;
+import org.pr.nb.mongodb.nodes.db.actions.ConnectAction;
+import com.mongodb.MongoClient;
 import java.beans.IntrospectionException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.Action;
+import org.openide.actions.PropertiesAction;
+import org.openide.actions.RenameAction;
 import org.openide.nodes.BeanNode;
+import org.openide.nodes.Children;
+import org.openide.util.actions.SystemAction;
 import org.pr.nb.mongodb.data.NBMongoDBInstance;
+import org.pr.nb.mongodb.nodes.db.NBMongodbDatabaseNodeFactory;
+import org.pr.nb.mongodb.nodes.db.actions.DisconnectAction;
+import org.pr.nb.nb.mongodb.NBMongoSupportFactory;
 
 /**
  *
@@ -28,7 +38,9 @@ import org.pr.nb.mongodb.data.NBMongoDBInstance;
  */
 public class NBMongoDBInstanceNode extends BeanNode<NBMongoDBInstance> {
 
-    private NBMongoDBInstance bean;
+    private final NBMongoDBInstance bean;
+    private MongoClient client;
+
     public NBMongoDBInstanceNode(NBMongoDBInstance bean) throws IntrospectionException {
         super(bean);
         this.bean = bean;
@@ -39,20 +51,9 @@ public class NBMongoDBInstanceNode extends BeanNode<NBMongoDBInstance> {
         return bean.getDisplayName();
     }
 
-    
     @Override
     public Action getPreferredAction() {
         return super.getPreferredAction(); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Image getOpenedIcon(int type) {
-        return super.getOpenedIcon(type); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Image getIcon(int type) {
-        return super.getIcon(type); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -63,6 +64,34 @@ public class NBMongoDBInstanceNode extends BeanNode<NBMongoDBInstance> {
     @Override
     public void destroy() throws IOException {
         fireNodeDestroyed();
+    }
+
+    @Override
+    public Action[] getActions(boolean context) {
+        List<Action> actions = new ArrayList<>();
+        if (client == null) {
+            actions.add(new ConnectAction(this));
+        } else {
+            actions.add(new DisconnectAction(this));
+        }
+        actions.add(SystemAction.get(RenameAction.class));
+        actions.add(SystemAction.get(PropertiesAction.class));
+        Action[] data = new Action[actions.size()];
+        return actions.toArray(data);
+    }
+
+    public void disconnect() {
+        if (client == null) {
+            return;
+        }
+        client.close();
+        Children children = super.getChildren();
+        children.remove(children.getNodes(true));
+    }
+
+    public void connect() {
+        client = NBMongoSupportFactory.getInstance().connect(bean.getHostName(), bean.getPortNumber(),null,null);
+        super.setChildren(Children.create(new NBMongodbDatabaseNodeFactory(client), true));
     }
 
 }

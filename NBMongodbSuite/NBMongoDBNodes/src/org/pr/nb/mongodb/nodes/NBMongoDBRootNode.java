@@ -29,6 +29,8 @@ class NBMongoDBRootNode extends AbstractNode {
         setName(Bundle.LBL_DISPLAY_NAME());
         setDisplayName(Bundle.LBL_DISPLAY_NAME());
     }
+    
+    
 
 
     @Override
@@ -75,7 +77,5 @@ class NBMongoDBRootNode extends AbstractNode {
             new NBMongoDBInstanceType()
         };
     }
-
-    
 
 }

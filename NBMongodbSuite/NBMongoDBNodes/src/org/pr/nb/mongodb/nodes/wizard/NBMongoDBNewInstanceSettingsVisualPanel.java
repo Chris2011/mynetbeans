@@ -20,6 +20,7 @@ import org.openide.util.ChangeSupport;
 import org.openide.util.NbBundle;
 import org.pr.nb.mongodb.component.PropertyNames;
 import org.pr.nb.mongodb.data.NBMongoDBInstance;
+import org.pr.nb.nb.mongodb.NBMongoSupportFactory;
 
 @NbBundle.Messages({
     "# {0} - host",
@@ -198,8 +199,7 @@ public final class NBMongoDBNewInstanceSettingsVisualPanel extends JPanel implem
                     } catch (NumberFormatException e) {
                         port = 27017;
                     }
-                    ServerAddress address = new ServerAddress(host, port);
-                    MongoClient client = new MongoClient(address);
+                    MongoClient client = NBMongoSupportFactory.getInstance().connect(host, port, null,null);
                     client.listDatabases();
                     settings.putProperty(WizardDescriptor.PROP_INFO_MESSAGE, Bundle.SUCCESSFULLY_CONNECTED(hostTextField.getText(), portTextField.getText()));
                     connectionOK = true;
